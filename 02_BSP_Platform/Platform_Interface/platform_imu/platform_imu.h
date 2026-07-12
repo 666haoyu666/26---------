@@ -2,6 +2,7 @@
  * @file    platform_imu.h
  * @brief   惯性测量单元能力接口
  * @note    仅提供yaw、pitch和roll姿态角，角度单位为deg
+ * @author  haoyu
  */
 
 #ifndef PLATFORM_IMU_H

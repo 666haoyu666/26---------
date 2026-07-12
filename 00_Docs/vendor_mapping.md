@@ -8,7 +8,7 @@
 | MCU HAL |  |  | Drivers/ |  | TODO |
 | CMSIS |  |  | Drivers/CMSIS |  | TODO |
 | CubeMX 生成码 |  |  | Core/ |  | 物理保留，勿手改 |
-| RTOS |  |  | Middlewares/ |  | TODO（是否用 RTOS 待定） |
+| RTOS | FreeRTOS（适配目标） | 待 CubeMX 确定 | Middlewares/ |  | OSAL 已迁移，Vendor 待落地 |
 | 第三方算法/库 |  |  |  |  | TODO |
 
 > 规则：**不直接改 Vendor 源码**。必要修改通过 Impl 适配 / wrapper 隔离 / patch 记录（见 patch/）。

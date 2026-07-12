@@ -25,7 +25,7 @@
 | `01_APP/` | 应用层：`User_Init/`（入口转发 `app_main`）、`User_Isr_handlers/` | 仅入口骨架 |
 | `02_BSP_Platform/` | 设备封装：`Platform_Interface/` + `Bsp_Drivers/` + `Bsp_Integration/` | 电机域已落地，余占位 |
 | `02_MCU_Platform/` | MCU 外设接口+实现：`MCU_Common/` + `MCU_Core_XXX/`(+`xxx_port/`) + `MCU_LIB/` | 公共契约 + PWM/TIM/ENC/GPIO 接口已落地 |
-| `02_OS_Platform/` | RTOS 封装：`OS_Wrapper/` + `OS_Implementation/FreeRTOS/` | 占位 |
+| `02_OS_Platform/` | FreeRTOS 的单层 OSAL Wrapper | 已接入，Wrapper 直接调用 FreeRTOS |
 | `02_Middleware_Platform/` | 通用中间件/协议/库 | 占位 |
 | `03_Config/` | 全局配置 + 板级类型/映射 | 已落地 |
 | `04_Common_Utils/` | 纯算法（CRC/滤波/PID/环形缓冲…） | 空（待建） |

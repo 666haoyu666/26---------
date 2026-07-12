@@ -2,6 +2,7 @@
  * @file    platform_lsensor.h
  * @brief   线性传感器能力接口，使用稳定物理槽位标识
  * @note    line_map的位n对应PLATFORM_LSENSOR_n，置1表示检测到线
+ * @author  haoyu
  */
 
 #ifndef PLATFORM_LSENSOR_H

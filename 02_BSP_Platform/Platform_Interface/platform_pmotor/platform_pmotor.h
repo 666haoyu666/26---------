@@ -2,6 +2,7 @@
  * @file    platform_pmotor.h
  * @brief   闭环电机能力接口，使用稳定物理槽位标识
  * @note    Service只设置目标和读取状态，控制节拍由handler持有
+ * @author  haoyu
  */
 
 #ifndef PLATFORM_PMOTOR_H

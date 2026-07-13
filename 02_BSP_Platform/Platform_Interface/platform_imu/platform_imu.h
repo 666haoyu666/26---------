@@ -1,7 +1,7 @@
 /**
  * @file    platform_imu.h
  * @brief   惯性测量单元能力接口
- * @note    仅提供yaw、pitch和roll姿态角，角度单位为deg
+ * @note    提供姿态角与三轴角速度，单位分别为deg和deg/s
  * @author  haoyu
  */
 
@@ -24,11 +24,14 @@ typedef enum {
     PLATFORM_IMU_ERROR
 } platform_imu_run_state_t;
 
-/** IMU姿态一致快照。 */
+/** IMU姿态与角速度一致快照。 */
 typedef struct {
     float                    yaw_deg;    /* 航向角，顺时针为正，deg */
     float                    pitch_deg;  /* 俯仰角，deg */
     float                    roll_deg;   /* 横滚角，deg */
+    float                    wx;         /* X轴角速度，deg/s */
+    float                    wy;         /* Y轴角速度，deg/s */
+    float                    wz;         /* Z轴角速度，deg/s */
     platform_imu_run_state_t run_state;  /* 模块运行状态 */
 } platform_imu_data_t;
 
@@ -45,7 +48,7 @@ platform_err_t platform_imu_init(void);
 platform_err_t platform_imu_deinit(void);
 
 /**
- * @brief  读取同一采样时刻的IMU姿态快照
+ * @brief  读取同一采样时刻的IMU姿态与角速度快照
  * @param  data 输出数据，不可为NULL
  * @retval PLATFORM_ERR_OK / PLATFORM_ERR_PARAM /
  *         PLATFORM_ERR_NOT_INITIALIZED / PLATFORM_ERR_FAIL

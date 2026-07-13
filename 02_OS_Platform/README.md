@@ -58,8 +58,14 @@ APP / Server / BSP / Middleware
 
 ## 接口约定
 
+- 所有表示执行结果的接口统一返回 `platform_err_t`。
+- 参数非法返回 `PLATFORM_ERR_PARAM`。
+- 等待对象失败返回 `PLATFORM_ERR_TIMEOUT`。
+- FreeRTOS 对象创建失败返回 `PLATFORM_ERR_NO_MEMORY`。
+- FreeRTOS 命令队列繁忙返回 `PLATFORM_ERR_BUSY`。
 - `osal_task_create()` 的 `stack_size` 单位为字节。
 - `osal_task_delay()` 的单位为 tick。
+- `osal_task_wait_until()` 基于上次唤醒 tick 维持固定周期。
 - 其余带 `timeout`、`period` 或 `delay_ms` 的接口单位为毫秒。
 - `OSAL_MAX_DELAY` 表示永久等待。
 - 句柄均为不透明类型，上层不得解引用或转换为 FreeRTOS 句柄。
@@ -67,6 +73,15 @@ APP / Server / BSP / Middleware
 - 互斥锁和普通临界区接口不得在 ISR 中使用。
 - CubeMX 已在 `main.c` 中启动 CMSIS-RTOS2 调度器，上层不得再调用
   `osal_task_start()`。
+
+数量、周期等数据通过输出参数返回，不与错误码共用同一个返回值。例如：
+
+```c
+uint32_t count;
+platform_err_t err;
+
+err = osal_queue_count(queue_handle, &count);
+```
 
 ## 工程接入
 

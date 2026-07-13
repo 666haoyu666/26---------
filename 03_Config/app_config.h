@@ -10,6 +10,8 @@
 #include "feature_config.h"
 #include "compile_config.h"
 
+#define APP_ODOM_PERIOD_MS       10U  /* 里程计解算周期，ms */
+
 /* 示例占位（待循迹小车任务划分后填写）：
  * #define APP_TASK_TRACKING_PRIO   3
  * #define APP_TASK_MOTOR_PERIOD_MS 5

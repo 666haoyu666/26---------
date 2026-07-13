@@ -1,0 +1,101 @@
+/**
+ * @file    platform_lsensor.h
+ * @brief   平行二值灰度传感器组接口
+ * @note    槽位号从左到右递增，线偏差以阵列中心为原点，右正左负，单位mm
+ */
+
+#ifndef PLATFORM_LSENSOR_H
+#define PLATFORM_LSENSOR_H
+
+#include "platform_error.h"
+#include "platform_type.h"
+
+/** 单路灰度传感器的二值检测状态。 */
+typedef enum {
+    PLATFORM_NOT_LINE = 0,
+    PLATFORM_IS_LINE
+} platform_is_line_t;
+
+/** 稳定物理槽位；实际启用路数由板级映射决定。 */
+typedef enum {
+    PLATFORM_LSENSOR_0 = 0,
+    PLATFORM_LSENSOR_1,
+    PLATFORM_LSENSOR_2,
+    PLATFORM_LSENSOR_3,
+    PLATFORM_LSENSOR_4,
+    PLATFORM_LSENSOR_5,
+    PLATFORM_LSENSOR_6,
+    PLATFORM_LSENSOR_7,
+    PLATFORM_LSENSOR_ID_MAX
+} platform_lsensor_id_t;
+
+/** 将传感器槽位转换为line_map位掩码。 */
+#define PLATFORM_LSENSOR_BIT(id) \
+    ((uint8_t)(1U << (uint8_t)(id)))
+
+/** 灰度传感器组运行状态。 */
+typedef enum {
+    PLATFORM_LSENSOR_OFF = 0,
+    PLATFORM_LSENSOR_ACTIVE,
+    PLATFORM_LSENSOR_ERROR
+} platform_lsensor_run_state_t;
+
+/** 本次线位置识别结果。 */
+typedef enum {
+    PLATFORM_LSENSOR_NO_LINE = 0,  /* 稳定物理槽位 */
+    PLATFORM_LSENSOR_TRACKING   ,  /* 稳定物理槽位 */
+    PLATFORM_LSENSOR_AMBIGUOUS     /* 稳定物理槽位 */
+} platform_lsensor_track_t;
+
+/** 单路灰度传感器状态及安装几何信息。 */
+typedef struct {
+    platform_lsensor_id_t  id;               /* 稳定物理槽位 */
+    platform_is_line_t     is_line;          /* 本次检测状态 */
+    uint8_t                next_mm;          /* 到下一探头的中心距，mm */
+} platform_lsensor_state_t;
+
+/** 同一采样时刻的灰度传感器组快照。 */
+typedef struct {
+    /* 数组下标与稳定物理槽位一致。 */
+    platform_lsensor_state_t      sensors[PLATFORM_LSENSOR_ID_MAX];
+    float                         line_offset_mm;  /* 线中心偏差，右正左负 */
+    uint8_t                       line_map;        /* 各路二值检测位图 */
+    uint8_t                       sensor_count;    /* 实际启用路数 */
+    platform_lsensor_track_t      track_state;     /* 线位置识别结果 */
+    platform_lsensor_run_state_t  run_state;       /* 模块运行状态 */
+} platform_lsensors_state_t;
+
+/**
+ * @brief  初始化灰度传感器组，初始化完成后保持OFF状态
+ * @retval PLATFORM_ERR_OK / PLATFORM_ERR_ALREADY_INIT / PLATFORM_ERR_FAIL
+ */
+platform_err_t platform_lsensor_init(void);
+
+/**
+ * @brief  注销灰度传感器组并释放资源
+ * @retval PLATFORM_ERR_OK / PLATFORM_ERR_NOT_INITIALIZED / PLATFORM_ERR_FAIL
+ */
+platform_err_t platform_lsensor_deinit(void);
+
+/**
+ * @brief  启动灰度传感器组采样
+ * @retval PLATFORM_ERR_OK / PLATFORM_ERR_NOT_INITIALIZED / PLATFORM_ERR_FAIL
+ */
+platform_err_t platform_lsensor_start(void);
+
+/**
+ * @brief  停止灰度传感器组采样并保持已分配资源
+ * @retval PLATFORM_ERR_OK / PLATFORM_ERR_NOT_INITIALIZED / PLATFORM_ERR_FAIL
+ */
+platform_err_t platform_lsensor_stop(void);
+
+/**
+ * @brief  读取灰度传感器组的同拍状态和线中心偏差
+ * @param  state 输出快照，不可为NULL
+ * @retval PLATFORM_ERR_OK / PLATFORM_ERR_PARAM /
+ *         PLATFORM_ERR_NOT_INITIALIZED / PLATFORM_ERR_FAIL
+ * @note   无线和歧义仍返回OK；读取失败时不修改输出内容
+ */
+platform_err_t platform_lsensor_read(platform_lsensors_state_t *state);
+
+#endif /* PLATFORM_LSENSOR_H */

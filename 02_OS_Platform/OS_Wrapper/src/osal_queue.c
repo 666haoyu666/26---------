@@ -5,30 +5,29 @@
 
 #include "osal_queue.h"
 
-#include "osal_error.h"
 #include "osal_freertos_priv.h"
 
-int32_t osal_queue_create(size_t queue_depth, size_t data_size,
-                          osal_queue_handle_t *queue_handle)
+platform_err_t osal_queue_create(size_t queue_depth, size_t data_size,
+                                 osal_queue_handle_t *queue_handle)
 {
     QueueHandle_t handle;
 
     if (queue_depth == 0U || data_size == 0U) {
-        return OSAL_ERR_INVALID_SIZE;
+        return PLATFORM_ERR_PARAM;
     }
     if (queue_handle == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
 
     *queue_handle = NULL;
     handle = xQueueCreate((UBaseType_t)queue_depth,
                           (UBaseType_t)data_size);
     if (handle == NULL) {
-        return OSAL_ERROR;
+        return PLATFORM_ERR_NO_MEMORY;
     }
 
     *queue_handle = (osal_queue_handle_t)handle;
-    return OSAL_SUCCESS;
+    return PLATFORM_ERR_OK;
 }
 
 void osal_queue_delete(osal_queue_handle_t queue_handle)
@@ -40,15 +39,16 @@ void osal_queue_delete(osal_queue_handle_t queue_handle)
     vQueueDelete((QueueHandle_t)queue_handle);
 }
 
-int32_t osal_queue_send(osal_queue_handle_t queue_handle, const void *data,
-                        osal_tick_type_t timeout_ms)
+platform_err_t osal_queue_send(osal_queue_handle_t queue_handle,
+                               const void *data,
+                               osal_tick_type_t timeout_ms)
 {
     QueueHandle_t handle = (QueueHandle_t)queue_handle;
     BaseType_t task_woken = pdFALSE;
     BaseType_t status;
 
     if (queue_handle == NULL || data == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (OSAL_IS_IN_ISR()) {
@@ -59,18 +59,19 @@ int32_t osal_queue_send(osal_queue_handle_t queue_handle, const void *data,
                             osal_ms_to_ticks(timeout_ms));
     }
 
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_QUEUE_FULL;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_BUSY;
 }
 
-int32_t osal_queue_receive(osal_queue_handle_t queue_handle, void *data,
-                           osal_tick_type_t timeout_ms)
+platform_err_t osal_queue_receive(osal_queue_handle_t queue_handle,
+                                  void *data,
+                                  osal_tick_type_t timeout_ms)
 {
     QueueHandle_t handle = (QueueHandle_t)queue_handle;
     BaseType_t task_woken = pdFALSE;
     BaseType_t status;
 
     if (queue_handle == NULL || data == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (OSAL_IS_IN_ISR()) {
@@ -81,17 +82,18 @@ int32_t osal_queue_receive(osal_queue_handle_t queue_handle, void *data,
                                osal_ms_to_ticks(timeout_ms));
     }
 
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_QUEUE_EMPTY;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_TIMEOUT;
 }
 
-int32_t osal_queue_peek(osal_queue_handle_t queue_handle, void *data,
-                        osal_tick_type_t timeout_ms)
+platform_err_t osal_queue_peek(osal_queue_handle_t queue_handle,
+                               void *data,
+                               osal_tick_type_t timeout_ms)
 {
     QueueHandle_t handle = (QueueHandle_t)queue_handle;
     BaseType_t status;
 
     if (queue_handle == NULL || data == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (OSAL_IS_IN_ISR()) {
@@ -101,19 +103,22 @@ int32_t osal_queue_peek(osal_queue_handle_t queue_handle, void *data,
                             osal_ms_to_ticks(timeout_ms));
     }
 
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_QUEUE_EMPTY;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_TIMEOUT;
 }
 
-int32_t osal_queue_msg_waiting(osal_queue_handle_t queue_handle)
+platform_err_t osal_queue_count(osal_queue_handle_t queue_handle,
+                                uint32_t *count)
 {
     QueueHandle_t handle = (QueueHandle_t)queue_handle;
 
-    if (queue_handle == NULL) {
-        return OSAL_INVALID_POINTER;
+    if (queue_handle == NULL || count == NULL) {
+        return PLATFORM_ERR_PARAM;
     }
     if (OSAL_IS_IN_ISR()) {
-        return (int32_t)uxQueueMessagesWaitingFromISR(handle);
+        *count = (uint32_t)uxQueueMessagesWaitingFromISR(handle);
+    } else {
+        *count = (uint32_t)uxQueueMessagesWaiting(handle);
     }
 
-    return (int32_t)uxQueueMessagesWaiting(handle);
+    return PLATFORM_ERR_OK;
 }

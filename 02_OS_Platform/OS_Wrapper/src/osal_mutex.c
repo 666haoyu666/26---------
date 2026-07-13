@@ -5,25 +5,24 @@
 
 #include "osal_mutex.h"
 
-#include "osal_error.h"
 #include "osal_freertos_priv.h"
 
-int32_t osal_mutex_create(osal_mutex_handle_t *mutex_handle)
+platform_err_t osal_mutex_create(osal_mutex_handle_t *mutex_handle)
 {
     SemaphoreHandle_t handle;
 
     if (mutex_handle == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
 
     *mutex_handle = NULL;
     handle = xSemaphoreCreateMutex();
     if (handle == NULL) {
-        return OSAL_ERROR;
+        return PLATFORM_ERR_NO_MEMORY;
     }
 
     *mutex_handle = (osal_mutex_handle_t)handle;
-    return OSAL_SUCCESS;
+    return PLATFORM_ERR_OK;
 }
 
 void osal_mutex_delete(osal_mutex_handle_t mutex_handle)
@@ -35,34 +34,34 @@ void osal_mutex_delete(osal_mutex_handle_t mutex_handle)
     vSemaphoreDelete((SemaphoreHandle_t)mutex_handle);
 }
 
-int32_t osal_mutex_give(osal_mutex_handle_t mutex_handle)
+platform_err_t osal_mutex_give(osal_mutex_handle_t mutex_handle)
 {
     BaseType_t status;
 
     if (mutex_handle == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
     if (OSAL_IS_IN_ISR()) {
-        return OSAL_ERR_IN_ISR;
+        return PLATFORM_ERR_NOT_SUPPORTED;
     }
 
     status = xSemaphoreGive((SemaphoreHandle_t)mutex_handle);
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_ERROR;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_FAIL;
 }
 
-int32_t osal_mutex_take(osal_mutex_handle_t mutex_handle,
-                        osal_tick_type_t timeout_ms)
+platform_err_t osal_mutex_take(osal_mutex_handle_t mutex_handle,
+                               osal_tick_type_t timeout_ms)
 {
     BaseType_t status;
 
     if (mutex_handle == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
     if (OSAL_IS_IN_ISR()) {
-        return OSAL_ERR_IN_ISR;
+        return PLATFORM_ERR_NOT_SUPPORTED;
     }
 
     status = xSemaphoreTake((SemaphoreHandle_t)mutex_handle,
                             osal_ms_to_ticks(timeout_ms));
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_ERROR_TIMEOUT;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_TIMEOUT;
 }

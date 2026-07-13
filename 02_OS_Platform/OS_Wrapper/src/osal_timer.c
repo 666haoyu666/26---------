@@ -8,7 +8,6 @@
 #include "osal_timer.h"
 
 #include "osal_config.h"
-#include "osal_error.h"
 #include "osal_freertos_priv.h"
 
 typedef struct {
@@ -36,34 +35,34 @@ static void osal_timer_record_free(void *record, uint32_t unused)
     vPortFree(record);
 }
 
-int32_t osal_timer_create(osal_timer_handle_t *timer_handle,
-                          const char *timer_name,
-                          osal_tick_type_t timer_period_ms,
-                          uint8_t auto_reload,
-                          osal_timer_cb_function_t timer_cb,
-                          void *argument)
+platform_err_t osal_timer_create(osal_timer_handle_t *timer_handle,
+                                 const char *timer_name,
+                                 osal_tick_type_t timer_period_ms,
+                                 uint8_t auto_reload,
+                                 osal_timer_cb_function_t timer_cb,
+                                 void *argument)
 {
     osal_timer_record_t *record;
     TimerHandle_t native_timer;
     size_t name_len;
 
     if (timer_handle == NULL || timer_name == NULL || timer_cb == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
     if (memchr(timer_name, '\0', OSAL_NAME_MAX_LEN) == NULL) {
-        return OSAL_ERR_NAME_TOO_LONG;
+        return PLATFORM_ERR_PARAM;
     }
     if (timer_period_ms == 0U) {
-        return OSAL_ERR_INVALID_SIZE;
+        return PLATFORM_ERR_PARAM;
     }
     if (auto_reload > 1U) {
-        return OSAL_ERR_INVALID_ARGUMENT;
+        return PLATFORM_ERR_PARAM;
     }
 
     *timer_handle = NULL;
     record = pvPortMalloc(sizeof(*record));
     if (record == NULL) {
-        return OSAL_TIMER_ERR_UNAVAILABLE;
+        return PLATFORM_ERR_NO_MEMORY;
     }
 
     name_len = strlen(timer_name);
@@ -79,22 +78,22 @@ int32_t osal_timer_create(osal_timer_handle_t *timer_handle,
                                 osal_timer_cb);
     if (native_timer == NULL) {
         vPortFree(record);
-        return OSAL_TIMER_ERR_UNAVAILABLE;
+        return PLATFORM_ERR_NO_MEMORY;
     }
 
     *timer_handle = (osal_timer_handle_t)native_timer;
     record->timer_handle = *timer_handle;
-    return OSAL_SUCCESS;
+    return PLATFORM_ERR_OK;
 }
 
-int32_t osal_timer_start(osal_timer_handle_t timer_handle,
-                         osal_tick_type_t timeout_ms)
+platform_err_t osal_timer_start(osal_timer_handle_t timer_handle,
+                                osal_tick_type_t timeout_ms)
 {
     BaseType_t task_woken = pdFALSE;
     BaseType_t status;
 
     if (timer_handle == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (OSAL_IS_IN_ISR()) {
@@ -106,17 +105,17 @@ int32_t osal_timer_start(osal_timer_handle_t timer_handle,
                              osal_ms_to_ticks(timeout_ms));
     }
 
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_ERROR;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_BUSY;
 }
 
-int32_t osal_timer_stop(osal_timer_handle_t timer_handle,
-                        osal_tick_type_t timeout_ms)
+platform_err_t osal_timer_stop(osal_timer_handle_t timer_handle,
+                               osal_tick_type_t timeout_ms)
 {
     BaseType_t task_woken = pdFALSE;
     BaseType_t status;
 
     if (timer_handle == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (OSAL_IS_IN_ISR()) {
@@ -128,22 +127,23 @@ int32_t osal_timer_stop(osal_timer_handle_t timer_handle,
                             osal_ms_to_ticks(timeout_ms));
     }
 
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_ERROR;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_BUSY;
 }
 
-int32_t osal_timer_period_change(osal_timer_handle_t timer_handle,
-                                 osal_tick_type_t new_period_ms,
-                                 osal_tick_type_t timeout_ms)
+platform_err_t osal_timer_period_change(
+    osal_timer_handle_t timer_handle,
+    osal_tick_type_t new_period_ms,
+    osal_tick_type_t timeout_ms)
 {
     TickType_t new_period;
     BaseType_t task_woken = pdFALSE;
     BaseType_t status;
 
     if (timer_handle == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
     if (new_period_ms == 0U) {
-        return OSAL_ERR_INVALID_SIZE;
+        return PLATFORM_ERR_PARAM;
     }
 
     new_period = osal_ms_to_ticks(new_period_ms);
@@ -158,11 +158,11 @@ int32_t osal_timer_period_change(osal_timer_handle_t timer_handle,
                                     osal_ms_to_ticks(timeout_ms));
     }
 
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_ERROR;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_BUSY;
 }
 
-int32_t osal_timer_delete(osal_timer_handle_t timer_handle,
-                          osal_tick_type_t timeout_ms)
+platform_err_t osal_timer_delete(osal_timer_handle_t timer_handle,
+                                 osal_tick_type_t timeout_ms)
 {
     TimerHandle_t native_timer = (TimerHandle_t)timer_handle;
     void *record;
@@ -170,34 +170,34 @@ int32_t osal_timer_delete(osal_timer_handle_t timer_handle,
     BaseType_t status;
 
     if (timer_handle == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
     if (OSAL_IS_IN_ISR()) {
-        return OSAL_ERR_IN_ISR;
+        return PLATFORM_ERR_NOT_SUPPORTED;
     }
 
     wait_ticks = osal_ms_to_ticks(timeout_ms);
     record = pvTimerGetTimerID(native_timer);
     status = xTimerDelete(native_timer, wait_ticks);
     if (status != pdPASS) {
-        return OSAL_ERROR;
+        return PLATFORM_ERR_BUSY;
     }
 
     status = xTimerPendFunctionCall(osal_timer_record_free,
                                     record,
                                     0U,
                                     wait_ticks);
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_ERROR;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_BUSY;
 }
 
-int32_t osal_timer_reset(osal_timer_handle_t timer_handle,
-                         osal_tick_type_t timeout_ms)
+platform_err_t osal_timer_reset(osal_timer_handle_t timer_handle,
+                                osal_tick_type_t timeout_ms)
 {
     BaseType_t task_woken = pdFALSE;
     BaseType_t status;
 
     if (timer_handle == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
 
     if (OSAL_IS_IN_ISR()) {
@@ -209,17 +209,19 @@ int32_t osal_timer_reset(osal_timer_handle_t timer_handle,
                              osal_ms_to_ticks(timeout_ms));
     }
 
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_ERROR;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_BUSY;
 }
 
-osal_tick_type_t osal_timer_period_get(osal_timer_handle_t timer_handle)
+platform_err_t osal_timer_period_get(osal_timer_handle_t timer_handle,
+                                     osal_tick_type_t *period_ms)
 {
     TickType_t period_ticks;
 
-    if (timer_handle == NULL) {
-        return 0U;
+    if (timer_handle == NULL || period_ms == NULL) {
+        return PLATFORM_ERR_PARAM;
     }
 
     period_ticks = xTimerGetPeriod((TimerHandle_t)timer_handle);
-    return osal_ticks_to_ms(period_ticks);
+    *period_ms = osal_ticks_to_ms(period_ticks);
+    return PLATFORM_ERR_OK;
 }

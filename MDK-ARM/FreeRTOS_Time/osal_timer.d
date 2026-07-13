@@ -5,7 +5,7 @@ freertos_time\osal_timer.o: ../02_OS_Platform/OS_Wrapper/inc/common_types.h
 freertos_time\osal_timer.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stddef.h
 freertos_time\osal_timer.o: C:\Keil_v5\ARM\ARMCC\Bin\..\include\stdint.h
 freertos_time\osal_timer.o: ../02_OS_Platform/OS_Wrapper/inc/osal_config.h
-freertos_time\osal_timer.o: ../02_OS_Platform/OS_Wrapper/inc/osal_error.h
+freertos_time\osal_timer.o: ../02_Common_Platform/platform_error.h
 freertos_time\osal_timer.o: ../02_OS_Platform/OS_Wrapper/src/osal_freertos_priv.h
 freertos_time\osal_timer.o: ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h
 freertos_time\osal_timer.o: ../Core/Inc/FreeRTOSConfig.h

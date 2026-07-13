@@ -33,6 +33,10 @@
 #error "OSAL tasks require delete, suspend and delay support"
 #endif
 
+#if (INCLUDE_vTaskDelayUntil != 1)
+#error "OSAL periodic task delay requires vTaskDelayUntil support"
+#endif
+
 #if (OSAL_USE_16_BIT_TICKS != configUSE_16_BIT_TICKS)
 #error "OSAL and FreeRTOS tick widths must match"
 #endif

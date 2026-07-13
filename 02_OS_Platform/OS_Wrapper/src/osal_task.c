@@ -8,31 +8,30 @@
 #include "osal_task.h"
 
 #include "osal_config.h"
-#include "osal_error.h"
 #include "osal_freertos_priv.h"
 
-int32_t osal_task_create(const char *task_name,
-                         osal_task_entry entry,
-                         size_t stack_size,
-                         osal_priority_t priority,
-                         osal_task_handle_t *task_handle,
-                         void *argument)
+platform_err_t osal_task_create(const char *task_name,
+                                osal_task_entry entry,
+                                size_t stack_size,
+                                osal_priority_t priority,
+                                osal_task_handle_t *task_handle,
+                                void *argument)
 {
     configSTACK_DEPTH_TYPE stack_depth;
     BaseType_t status;
 
     if (task_name == NULL || entry == NULL) {
-        return OSAL_INVALID_POINTER;
+        return PLATFORM_ERR_PARAM;
     }
     if (memchr(task_name, '\0', OSAL_NAME_MAX_LEN) == NULL ||
         memchr(task_name, '\0', configMAX_TASK_NAME_LEN) == NULL) {
-        return OSAL_ERR_NAME_TOO_LONG;
+        return PLATFORM_ERR_PARAM;
     }
     if (stack_size == 0U) {
-        return OSAL_ERR_INVALID_SIZE;
+        return PLATFORM_ERR_PARAM;
     }
     if (priority >= configMAX_PRIORITIES) {
-        return OSAL_ERR_INVALID_PRIORITY;
+        return PLATFORM_ERR_PARAM;
     }
 
     stack_depth = (configSTACK_DEPTH_TYPE)
@@ -48,7 +47,7 @@ int32_t osal_task_create(const char *task_name,
                          argument,
                          (UBaseType_t)priority,
                          (TaskHandle_t *)task_handle);
-    return (status == pdPASS) ? OSAL_SUCCESS : OSAL_ERROR;
+    return (status == pdPASS) ? PLATFORM_ERR_OK : PLATFORM_ERR_NO_MEMORY;
 }
 
 void osal_task_delete(osal_task_handle_t task_handle)
@@ -97,6 +96,28 @@ void osal_task_delay_ms(uint32_t delay_ms)
     vTaskDelay(osal_ms_to_ticks((osal_tick_type_t)delay_ms));
 }
 
+platform_err_t osal_task_wait_until(osal_tick_type_t *last_wake,
+                                    uint32_t period_ms)
+{
+    TickType_t wake_tick;    /* FreeRTOS上次唤醒tick */
+    TickType_t period_ticks; /* FreeRTOS周期tick数 */
+
+    if (last_wake == NULL || period_ms == 0U ||
+        period_ms == OSAL_MAX_DELAY) {
+        return PLATFORM_ERR_PARAM;
+    }
+    if (OSAL_IS_IN_ISR()) {
+        return PLATFORM_ERR_NOT_SUPPORTED;
+    }
+
+    wake_tick = (TickType_t)*last_wake;
+    period_ticks = osal_ms_to_ticks((osal_tick_type_t)period_ms);
+    vTaskDelayUntil(&wake_tick, period_ticks);
+    *last_wake = (osal_tick_type_t)wake_tick;
+
+    return PLATFORM_ERR_OK;
+}
+
 void osal_enter_critical(void)
 {
     if (OSAL_IS_IN_ISR()) {
@@ -123,14 +144,14 @@ void osal_exit_critical(void)
     taskEXIT_CRITICAL();
 }
 
-int32_t osal_port_yield(void)
+platform_err_t osal_port_yield(void)
 {
     if (OSAL_IS_IN_ISR()) {
-        return OSAL_ERR_IN_ISR;
+        return PLATFORM_ERR_NOT_SUPPORTED;
     }
 
     portYIELD();
-    return OSAL_SUCCESS;
+    return PLATFORM_ERR_OK;
 }
 
 void osal_task_enable_interrupts(void)

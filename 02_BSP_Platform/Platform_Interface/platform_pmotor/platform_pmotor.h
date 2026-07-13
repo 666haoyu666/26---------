@@ -9,6 +9,7 @@
 #define PLATFORM_PMOTOR_H
 
 #include "platform_error.h"
+#include "platform_type.h"
 
 /** 稳定物理电机槽位，不承载左右轮等底盘语义。 */
 typedef enum {

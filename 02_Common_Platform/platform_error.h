@@ -5,9 +5,6 @@
  *
  * @file platform_error.h
  *
- * @par dependencies
- * - platform_type.h
- *
  * @author Jack | R&D Dept. | EternalChip
  *
  * @brief Provide the platform error definitions.
@@ -20,10 +17,6 @@
 
 #ifndef __PLATFORM_ERROR_H__
 #define __PLATFORM_ERROR_H__
-
-//******************************** Includes *********************************//
-
-#include "platform_type.h"
 
 //******************************** Declaring ********************************//
 
